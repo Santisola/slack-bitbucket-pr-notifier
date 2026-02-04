@@ -13,7 +13,6 @@ app.use(express.json({
 }));
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
-const PORT = process.env.PORT || 3000;
 
 // Función para validar la firma de Bitbucket
 const validateBitbucketSignature = (req) => {

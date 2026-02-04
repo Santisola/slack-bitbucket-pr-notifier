@@ -1,6 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.js" }
+    { "source": "/webhook", "destination": "/api/webhook" }
   ]
 }
