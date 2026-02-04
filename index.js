@@ -1,15 +1,46 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const { WebClient } = require('@slack/web-api');
 const express = require('express');
+const crypto = require('crypto'); // Para la validación de firma
 
 const app = express();
-app.use(express.json());
+
+// IMPORTANTE: Para validar la firma, necesitamos el body "crudo" (Buffer)
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 const PORT = process.env.PORT || 3000;
-const EMAIL_DOMAIN = process.env.BITBUCKET_DOMAIN_EMAIL || '@tuempresa.com';
+
+// Función para validar la firma de Bitbucket
+const validateBitbucketSignature = (req) => {
+    const signature = req.headers['x-hub-signature'];
+    const secret = process.env.BITBUCKET_WEBHOOK_SECRET;
+
+    if (!signature || !secret) return false;
+
+    // Bitbucket envía la firma en formato: sha256=hash
+    const [algorithm, remoteHash] = signature.split('=');
+    if (algorithm !== 'sha256') return false;
+
+    const localHash = crypto
+        .createHmac('sha256', secret)
+        .update(req.rawBody)
+        .digest('hex');
+
+    return crypto.timingSafeEqual(Buffer.from(localHash), Buffer.from(remoteHash));
+};
 
 app.post('/webhook', async (req, res) => {
+    // VALIDACIÓN DE SEGURIDAD
+    if (!validateBitbucketSignature(req)) {
+        console.error('⚠️ Intento de acceso no autorizado detectado.');
+        return res.status(403).send('Invalid signature');
+    }
+
     const data = req.body;
     const eventKey = req.headers['x-event-key'];
 
@@ -17,15 +48,14 @@ app.post('/webhook', async (req, res) => {
         const pr = data.pullrequest;
         const reviewers = pr.reviewers || [];
 
-        // Proseso cada reviewer en paralelo para mayor velocidad
         const notifications = reviewers.map(async (reviewer) => {
             try {
-                // Intento obtenerlo del campo email si Bitbucket lo envía
-                // Si no, lo construimos usando el nickname
+                // Lógica de email simplificada
                 
-				/* const userEmail = reviewer.email || `${reviewer.nickname}${EMAIL_DOMAIN}`; */
-
-				const userEmail = 'santiago.i@knownonline.com' // Solo para testing hardcodeo mi email
+				// Si es para testing, solo me mando a mí. En producción, uso el dinámico.
+                const userEmail = (process.env.NODE_ENV === 'dev') 
+                    ? "santiago.i@knownonline.com" 
+                    : (reviewer.email || `${reviewer.nickname}${process.env.BITBUCKET_DOMAIN_EMAIL}`);
 
                 const slackLookup = await slackClient.users.lookupByEmail({ email: userEmail });
 
@@ -64,7 +94,7 @@ app.post('/webhook', async (req, res) => {
                     });
                 }
             } catch (err) {
-                console.error(`Error procesando a ${reviewer.display_name}: ${err.message}`);
+                console.error(`Error con ${reviewer.display_name}: ${err.message}`);
             }
         });
 
@@ -74,4 +104,5 @@ app.post('/webhook', async (req, res) => {
     res.status(200).send('OK');
 });
 
-app.listen(PORT, () => console.log(`🚀 Bot de Revisores activo en puerto ${PORT}`));
+// Exportar para que Vercel lo maneje como Serverless Function
+module.exports = app;
