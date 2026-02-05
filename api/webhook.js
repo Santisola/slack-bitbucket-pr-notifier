@@ -33,7 +33,7 @@ const validateBitbucketSignature = (req) => {
     return crypto.timingSafeEqual(Buffer.from(localHash), Buffer.from(remoteHash));
 };
 
-app.post('/webhook', async (req, res) => {
+app.post('/', async (req, res) => {
     // VALIDACIÓN DE SEGURIDAD
     if (!validateBitbucketSignature(req)) {
         console.error('⚠️ Intento de acceso no autorizado detectado.');
