@@ -42,6 +42,8 @@ module.exports = async (req, res) => {
     const eventKey = req.headers['x-event-key'];
 
     if (['pullrequest:created', 'pullrequest:updated'].includes(eventKey)) {
+        console.log('WEBHOOK EVENT DATA', data)
+
         const pr = data.pullrequest;
         const reviewers = pr.reviewers || [];
 
