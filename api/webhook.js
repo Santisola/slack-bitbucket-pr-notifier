@@ -33,6 +33,21 @@ const FRASES = [
     "Otro PR más. La leyenda dice que algún día alguien va a mergear sin errores.",
 ];
 
+const FRASES_UPDATE = [
+    "¡Sorpresa! El autor subió más código. Parecía que no terminaba más.",
+    "PR actualizado. Alguien se olvidó un console.log o el Linter lo mandó a marzo.",
+    "Hubo cambios en el PR. Dice el autor que 'ahora sí que sí'. No le creas.",
+    "Actualizaron el PR. Espero que hayas guardado tus comentarios anteriores, porque ya no sirven.",
+    "¡Nuevos commits! El ciclo sin fin de la revisión continúa.",
+    "PR actualizado. Se ve que la primera versión era solo un borrador con ganas.",
+    "Más madera al fuego. El PR recibió cambios, prepará los ojos de nuevo.",
+    "¿Pensaste que habías terminado? El PR se actualizó. Iluso.",
+    "Actualización de PR: Un eufemismo para 'rompí lo que habías aprobado'.",
+    "Nuevos cambios detectados. Alguien está peleando con los tests y parece que va perdiendo.",
+    "El PR ha mutado. Entrá a ver qué nuevas pesadillas subieron hoy.",
+    "Commit push, lágrima cae. El PR se acaba de actualizar."
+];
+
 const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // Función de validación (se mantiene igual)
@@ -71,7 +86,7 @@ module.exports = async (req, res) => {
 
         const emoji = getRandom(EMOJIS);
         const emoji2 = getRandom(EMOJIS);
-        const fraseRandom = getRandom(FRASES);
+        const fraseRandom = eventKey === 'pullrequest:created' ? getRandom(FRASES) : getRandom(FRASES_UPDATE);
 
         const notifications = reviewers.map(async (reviewer) => {
             try {
