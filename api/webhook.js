@@ -4,8 +4,11 @@ const crypto = require('crypto');
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 const SLACK_USERS = new Map([
-  ["617166bf26a540007140970b", "U02EYDVHGFQ"],
-  ["617166bf26a540007140970b", "U02EYDVHGFQ"],
+  ["617166bf26a540007140970b", "U02EYDVHGFQ"], // Julito
+  ["6144ee46805a97006ad5c621", "U02AEU6Q729"], // Santi
+  ["62d6caea3b239b30ebc7bbae", "U03PWSC16AX"], // Joacote
+  ["633ae848748d1bfcb85b1d79", "U044EMEEE1L"], // Fefe
+  ["61c3862f0586a20069a5dcfe", "U02PRB885DF"], // Primo Yoe
 ])
 
 // Función de validación (se mantiene igual)
@@ -46,14 +49,10 @@ module.exports = async (req, res) => {
             try {
                 // Lógica de email
                 console.log('REVIEWER INFO', reviewer)
-                const userEmail = "santiago.i@knownonline.com";
-                // (reviewer.email || `${reviewer.nickname}${process.env.BITBUCKET_DOMAIN_EMAIL}`)
 
-                const slackLookup = await slackClient.users.lookupByEmail({ email: userEmail });
-
-                if (slackLookup.ok) {
+                if (SLACK_USERS.has(reviewer.id)) {
                     return slackClient.chat.postMessage({
-                        channel: slackLookup.user.id,
+                        channel: SLACK_USERS.get(reviewer.id),
                         text: `🚀 Tenés un PR ¡Que emoción!`,
                         blocks: [
                             {
@@ -84,6 +83,8 @@ module.exports = async (req, res) => {
                             }
                         ]
                     });
+                } else {
+                    console.warn(`⚠️ No se encontró usuario en Slack para: ${reviewer.display_name}`);
                 }
             } catch (err) {
                 // Si el error es que no encontró al usuario, lo logueamos pero no rompemos nada
