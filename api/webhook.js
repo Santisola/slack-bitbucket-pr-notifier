@@ -40,9 +40,9 @@ module.exports = async (req, res) => {
         const notifications = reviewers.map(async (reviewer) => {
             try {
                 // Lógica de email
-                const userEmail = (process.env.NODE_ENV === 'development') 
-                    ? "santiago.i@knownonline.com" 
-                    : (reviewer.email || `${reviewer.nickname}${process.env.BITBUCKET_DOMAIN_EMAIL}`);
+                console.log('REVIEWER INFO', reviewer)
+                const userEmail = "santiago.i@knownonline.com";
+                // (reviewer.email || `${reviewer.nickname}${process.env.BITBUCKET_DOMAIN_EMAIL}`)
 
                 const slackLookup = await slackClient.users.lookupByEmail({ email: userEmail });
 
@@ -81,7 +81,12 @@ module.exports = async (req, res) => {
                     });
                 }
             } catch (err) {
-                console.error(`Error con ${reviewer.display_name}: ${err.message}`);
+                // Si el error es que no encontró al usuario, lo logueamos pero no rompemos nada
+                if (err.data?.error === 'users_not_found') {
+                    console.warn(`⚠️ No se encontró usuario en Slack para: ${reviewer.display_name}`);
+                } else {
+                    console.error(`❌ Error con ${reviewer.display_name}:`, err.message);
+                }
             }
         });
         await Promise.all(notifications);
