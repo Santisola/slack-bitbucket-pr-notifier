@@ -50,9 +50,9 @@ module.exports = async (req, res) => {
                 // Lógica de email
                 console.log('REVIEWER INFO', reviewer)
 
-                if (SLACK_USERS.has(reviewer.id)) {
+                if (SLACK_USERS.has(reviewer.account_id)) {
                     return slackClient.chat.postMessage({
-                        channel: SLACK_USERS.get(reviewer.id),
+                        channel: SLACK_USERS.get(reviewer.account_id),
                         text: `🚀 Tenés un PR ¡Que emoción!`,
                         blocks: [
                             {
