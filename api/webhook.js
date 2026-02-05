@@ -11,6 +11,30 @@ const SLACK_USERS = new Map([
   ["61c3862f0586a20069a5dcfe", "U02PRB885DF"], // Primo Yoe
 ])
 
+const EMOJIS = ['🚀', '😵', '🔫', '🤯', '👽', '💻', '✨', '🔥', '🧙', '👀', '💡', '🎉', '🛠️', '🧉', '🐧'];
+
+const FRASES = [
+    "¡Tenés un PR para revisar! Que la fuerza te acompañe.",
+    "¡Alerta! Un PR salvaje apareció.",
+    "¡Habemus Pull Request!",
+    "¡Nuevo PR asignado! Miralo con amor.",
+    "Un nuevo PR. Por favor, tratá de que no explote todo en producción.",
+    "Mmmmmmm... Polemico",
+    "Mirá este código. O lo aprobás rápido o fingís demencia, vos elegís.",
+    "¡Alerta de PR! Revisalo antes de que se llene de conflictos.",
+    "Alguien mandó un PR y jura por su vida que 'en su local funcionaba'.",
+    "Un pequeño paso para el dev, un gran salto para el merge.",
+    "Dice el autor que son 'cambios menores'. Spoiler: Cambió 45 archivos.",
+    "Un nuevo PR que promete ser 'rápido'. Preparate para estar acá hasta las 7.",
+    "¡Nuevo PR asignado! Tratá de no llorar cuando veas el código.",
+    "Otro PR para la colección. ¿Lo mirás vos o tiro una moneda?",
+    "Tenemos un PR. Si encontrás un bug, no digas nada y hagamos como que no pasó.",
+    "Alguien escribió código y dice que sos la persona ideal para juzgarlo.",
+    "Otro PR más. La leyenda dice que algún día alguien va a mergear sin errores.",
+];
+
+const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
 // Función de validación (se mantiene igual)
 const validateBitbucketSignature = (req, rawBody) => {
     const signature = req.headers['x-hub-signature'];
@@ -47,19 +71,23 @@ module.exports = async (req, res) => {
         const pr = data.pullrequest;
         const reviewers = pr.reviewers || [];
 
+        const emoji = getRandom(EMOJIS);
+        const emoji2 = getRandom(EMOJIS);
+        const fraseRandom = getRandom(FRASES);
+
         const notifications = reviewers.map(async (reviewer) => {
             try {
                 // Lógica de email
                 if (SLACK_USERS.has(reviewer.account_id)) {
                     return slackClient.chat.postMessage({
                         channel: SLACK_USERS.get(reviewer.account_id),
-                        text: `🚀 Tenés un PR ¡Que emoción!`,
+                        text: `🚀 ${fraseRandom}`,
                         blocks: [
                             {
                                 "type": "header",
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "🙈 ¡Nuevo PR asignado! 🔥",
+                                    "text": `${emoji} ${fraseRandom} ${emoji2}`,
                                     "emoji": true
                                 }
                             },
@@ -75,7 +103,7 @@ module.exports = async (req, res) => {
                                 "elements": [
                                     {
                                         "type": "button",
-                                        "text": { "type": "plain_text", "text": "Ver obra maestra 🚀" },
+                                        "text": { "type": "plain_text", "text": "Ver PR 🙈" },
                                         "url": pr.links.html.href,
                                         "style": "primary"
                                     }
