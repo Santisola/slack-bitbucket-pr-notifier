@@ -1,42 +1,32 @@
-require('dotenv').config();
 const { WebClient } = require('@slack/web-api');
-const express = require('express');
-const crypto = require('crypto'); // Para la validación de firma
-
-const app = express();
-
-// IMPORTANTE: Para validar la firma, necesitamos el body "crudo" (Buffer)
-app.use(express.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf;
-  }
-}));
+const crypto = require('crypto');
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
-// Función para validar la firma de Bitbucket
-const validateBitbucketSignature = (req) => {
+// Función de validación (se mantiene igual)
+const validateBitbucketSignature = (req, rawBody) => {
     const signature = req.headers['x-hub-signature'];
     const secret = process.env.BITBUCKET_WEBHOOK_SECRET;
-
     if (!signature || !secret) return false;
 
-    // Bitbucket envía la firma en formato: sha256=hash
     const [algorithm, remoteHash] = signature.split('=');
-    if (algorithm !== 'sha256') return false;
-
-    const localHash = crypto
-        .createHmac('sha256', secret)
-        .update(req.rawBody)
-        .digest('hex');
+    const localHash = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 
     return crypto.timingSafeEqual(Buffer.from(localHash), Buffer.from(remoteHash));
 };
 
-app.post('/', async (req, res) => {
-    // VALIDACIÓN DE SEGURIDAD
-    if (!validateBitbucketSignature(req)) {
-        console.error('⚠️ Intento de acceso no autorizado detectado.');
+// EXPORTAR EL HANDLER DIRECTO PARA VERCEL
+module.exports = async (req, res) => {
+    // Solo aceptamos POST
+    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+
+    // IMPORTANTE: Vercel ya parsea el body, pero para la firma necesitamos el raw
+    // En Vercel, el body ya viene en req.body si es JSON. 
+    // Para la firma, usamos el string del body original.
+    const rawBody = JSON.stringify(req.body);
+
+    if (!validateBitbucketSignature(req, rawBody)) {
+        console.error('⚠️ Firma inválida');
         return res.status(403).send('Invalid signature');
     }
 
@@ -49,10 +39,8 @@ app.post('/', async (req, res) => {
 
         const notifications = reviewers.map(async (reviewer) => {
             try {
-                // Lógica de email simplificada
-                
-				// Si es para testing, solo me mando a mí. En producción, uso el dinámico.
-                const userEmail = (process.env.NODE_ENV === 'dev') 
+                // Lógica de email
+                const userEmail = (process.env.NODE_ENV === 'development') 
                     ? "santiago.i@knownonline.com" 
                     : (reviewer.email || `${reviewer.nickname}${process.env.BITBUCKET_DOMAIN_EMAIL}`);
 
@@ -96,12 +84,8 @@ app.post('/', async (req, res) => {
                 console.error(`Error con ${reviewer.display_name}: ${err.message}`);
             }
         });
-
         await Promise.all(notifications);
     }
 
-    res.status(200).send('OK');
-});
-
-// Exportar para que Vercel lo maneje como Serverless Function
-module.exports = app;
+    return res.status(200).send('OK');
+};
