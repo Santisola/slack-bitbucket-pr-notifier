@@ -3,6 +3,11 @@ const crypto = require('crypto');
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
+const SLACK_USERS = new Map([
+  ["617166bf26a540007140970b", "U02EYDVHGFQ"],
+  ["617166bf26a540007140970b", "U02EYDVHGFQ"],
+])
+
 // Función de validación (se mantiene igual)
 const validateBitbucketSignature = (req, rawBody) => {
     const signature = req.headers['x-hub-signature'];
@@ -55,7 +60,7 @@ module.exports = async (req, res) => {
                                 "type": "header",
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "🙈 Nueva revisión asignada",
+                                    "text": "🙈 ¡Nuevo PR asignado! 🧙‍♂️",
                                     "emoji": true
                                 }
                             },
@@ -71,7 +76,7 @@ module.exports = async (req, res) => {
                                 "elements": [
                                     {
                                         "type": "button",
-                                        "text": { "type": "plain_text", "text": "Revisar ahora" },
+                                        "text": { "type": "plain_text", "text": "Ver obra maestra 🚀" },
                                         "url": pr.links.html.href,
                                         "style": "primary"
                                     }
