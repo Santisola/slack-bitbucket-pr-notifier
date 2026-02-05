@@ -48,8 +48,6 @@ module.exports = async (req, res) => {
         const notifications = reviewers.map(async (reviewer) => {
             try {
                 // Lógica de email
-                console.log('REVIEWER INFO', reviewer)
-
                 if (SLACK_USERS.has(reviewer.account_id)) {
                     return slackClient.chat.postMessage({
                         channel: SLACK_USERS.get(reviewer.account_id),
