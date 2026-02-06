@@ -94,7 +94,7 @@ module.exports = async (req, res) => {
                 if (SLACK_USERS.has(reviewer.account_id)) {
                     return slackClient.chat.postMessage({
                         channel: SLACK_USERS.get(reviewer.account_id),
-                        text: `🚀 ${fraseRandom}`,
+                        text: `🚀 Tenés un PR ¡Que emoción!`,
                         blocks: [
                             {
                                 "type": "header",
